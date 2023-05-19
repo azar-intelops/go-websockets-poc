@@ -53,7 +53,7 @@ func setupRoutes() {
 }
 
 func main() {
-	fmt.Println("Go WebSockets!...")
 	setupRoutes()
+	log.Println("Running it on => http://localhost:8080", )
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
