@@ -10,7 +10,11 @@ import (
 
 var clients = make(map[*websocket.Conn]bool)
 var broadcast = make(chan Message)
-var upgrader = websocket.Upgrader{}
+var upgrader = websocket.Upgrader{
+	ReadBufferSize: 1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool { return true },
+}
 
 // Message represents a message from a client
 type Message struct {
@@ -24,6 +28,8 @@ func main() {
 
 	// Start listening for incoming messages to broadcast
 	go handleMessages()
+
+	fmt.Println(clients)
 
 	// Start the server on localhost:8080
 	fmt.Println("Server started on localhost:8080")
