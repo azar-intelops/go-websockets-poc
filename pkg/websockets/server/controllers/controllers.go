@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -13,27 +14,30 @@ type ChatController struct {
 	chatService *services.ChatService
 }
 
+// ChatService handles chat-related operations
+
+
 func NewChatController(chatService *services.ChatService) *ChatController {
 	return &ChatController{
 		chatService: chatService,
 	}
 }
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		// Add your security checks here to validate the request origin
-		// For example, you can check the request's Origin or referer header
-		// and return true only if it matches your allowed origins.
-		// You can also perform authentication or other security checks.
-
-		return true
-	},
-}
-
 func (c *ChatController) WebSocketHandler(w http.ResponseWriter, r *http.Request) {
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			// Add your security checks here to validate the request origin
+			// For example, you can check the request's Origin or referer header
+			// and return true only if it matches your allowed origins.
+			// You can also perform authentication or other security checks.
+
+			return true
+		},
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		http.Error(w, "Failed to upgrade to WebSocket", http.StatusInternalServerError)
+		log.Println("Error upgrading to WebSocket:", err)
 		return
 	}
 	defer conn.Close()
@@ -44,6 +48,7 @@ func (c *ChatController) WebSocketHandler(w http.ResponseWriter, r *http.Request
 		var message models.Message
 		err := conn.ReadJSON(&message)
 		if err != nil {
+			log.Println("Error reading message:", err)
 			break
 		}
 

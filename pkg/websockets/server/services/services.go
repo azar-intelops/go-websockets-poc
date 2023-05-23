@@ -10,40 +10,50 @@ import (
 )
 
 type ChatService struct {
-	messageDAO *daos.MessageDAO
-	clients    map[*websocket.Conn]bool
-	mutex      sync.Mutex
+	clients     map[*websocket.Conn]bool
+	clientsLock sync.Mutex
+	messageDAO  *daos.MessageDAO
 }
 
 func NewChatService(messageDAO *daos.MessageDAO) *ChatService {
 	return &ChatService{
-		messageDAO: messageDAO,
 		clients:    make(map[*websocket.Conn]bool),
+		messageDAO: messageDAO,
 	}
 }
 
-func (s *ChatService) RegisterClient(client *websocket.Conn) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+func (cs *ChatService) RegisterClient(client *websocket.Conn) {
+	cs.clientsLock.Lock()
+	defer cs.clientsLock.Unlock()
 
-	s.clients[client] = true
-}
+	cs.clients[client] = true
 
-func (s *ChatService) UnregisterClient(client *websocket.Conn) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	delete(s.clients, client)
-}
-
-func (s *ChatService) BroadcastMessage(message models.Message) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	for client := range s.clients {
+	messages := cs.messageDAO.GetMessages()
+	for _, message := range messages {
 		err := client.WriteJSON(message)
 		if err != nil {
 			log.Println("Error sending message to client:", err)
 		}
 	}
+}
+
+func (cs *ChatService) UnregisterClient(client *websocket.Conn) {
+	cs.clientsLock.Lock()
+	defer cs.clientsLock.Unlock()
+
+	delete(cs.clients, client)
+}
+
+func (cs *ChatService) BroadcastMessage(message models.Message) {
+	cs.clientsLock.Lock()
+	defer cs.clientsLock.Unlock()
+
+	for client := range cs.clients {
+		err := client.WriteJSON(message)
+		if err != nil {
+			log.Println("Error sending message to client:", err)
+		}
+	}
+
+	cs.messageDAO.SaveMessage(message)
 }

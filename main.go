@@ -10,16 +10,10 @@ import (
 )
 
 func main() {
-	// Initialize DAO
 	messageDAO := daos.NewMessageDAO()
-
-	// Initialize Service
 	chatService := services.NewChatService(messageDAO)
-
-	// Initialize Controller
 	chatController := controllers.NewChatController(chatService)
 
-	// Define routes and handlers
 	http.HandleFunc("/ws", chatController.WebSocketHandler)
 
 	log.Println("Starting chat application...")

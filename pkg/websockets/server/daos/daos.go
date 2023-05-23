@@ -12,9 +12,7 @@ type MessageDAO struct {
 }
 
 func NewMessageDAO() *MessageDAO {
-	return &MessageDAO{
-		messages: make([]models.Message, 0),
-	}
+	return &MessageDAO{}
 }
 
 func (dao *MessageDAO) SaveMessage(message models.Message) {
